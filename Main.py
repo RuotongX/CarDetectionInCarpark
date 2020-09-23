@@ -41,7 +41,7 @@ detect_fn = tf.saved_model.load(PATH_TO_SAVED_MODEL)
 
 category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS,
                                                                     use_display_name=True)
-
+TimerForParking = [0,0,0,0,0,0,0,0]
 
 
 while True:
@@ -88,12 +88,14 @@ while True:
 
     carlist = []
     for i in range(len(detectionlist)):
-        if detectionlist[i][1] == 3 or detectionlist[i][1] == 6 and detectionlist[i][2] > 0.25:
+        if detectionlist[i][1] == 3 or detectionlist[i][1] == 6 and detectionlist[i][2] > 0.3:
             y = (detectionlist[i][0][0]*256+detectionlist[i][0][2]*256)/2
             x = (detectionlist[i][0][1]*640+detectionlist[i][0][3]*640)/2
+            score = detectionlist[i][2]
             car = []
             car.append(x)
             car.append(y)
+            car.append(score)
             carlist.append(car)
 
     # viz_utils.visualize_boxes_and_labels_on_image_array(
@@ -106,23 +108,30 @@ while True:
     #             max_boxes_to_draw=70,
     #             min_score_thresh=.40,
     #             agnostic_mode=False)
-    # print(len(carlist))
 
-    parkingbox = [[3,72,46,225,0],[52,77,120,224,0],[135,76,202,241,0],[218,81,282,241,0],[297,62,364,242,0],[376,81,455,241,0],[463,89,542,238,0],[547,89,636,244,0]]
+    parkingbox = [[3,72,46,225,0],[52,77,120,224,0],[135,76,202,241,0],[218,81,282,241,0],[297,74,364,242,0],[376,87,455,241,0],[463,98,539,238,0],[547,92,636,244,0]]
 
-    for park in parkingbox:
+    for i in range(len(parkingbox)):
         for car in carlist:
-            if park[0]+10 < car[0] < park[2]-10 and park[1]+10 < car[1] < park[3]-10:
-                park[4] = 1
+            if parkingbox[i][0]+10 < car[0] < parkingbox[i][2]-10 and parkingbox[i][1]+10 < car[1] < parkingbox[i][3]-10:
+                parkingbox[i][4] = 1
+                if parkingbox[6][4] == 1 and i == 6:
+                    print(str(car[0])+str(car[1]))
+                    if round(car[0]) == 516 and round(car[1]) == 169:
+                        parkingbox[6][4] = 0
 
 
 
-
-    for park in parkingbox:
-        if park[4] == 1:
-            cv2.rectangle(image_np_with_detections,(park[0],park[1]),(park[2],park[3]),(0,0,255),2)
+    for i in range(len(parkingbox)):
+        if parkingbox[i][4] == 1:
+            cv2.rectangle(image_np_with_detections,(parkingbox[i][0],parkingbox[i][1]),(parkingbox[i][2],parkingbox[i][3]),(0,0,255),2)
+            TimerForParking[i] = TimerForParking[i] + 1
         else:
-            cv2.rectangle(image_np_with_detections,(park[0],park[1]),(park[2],park[3]),(255,255,255),2)
+            cv2.rectangle(image_np_with_detections,(parkingbox[i][0],parkingbox[i][1]),(parkingbox[i][2],parkingbox[i][3]),(255,255,255),2)
+            TimerForParking[i] = 0
+
+    for i in range(len(TimerForParking)):
+        cv2.putText(image_np_with_detections,'PK'+str(i+1)+':'+str(round(TimerForParking[i]/24))+'s'+'  ',(70*i,20),cv2.FONT_HERSHEY_COMPLEX,0.5,(0, 255, 0), 1)
 
     if ret == True:
         frame = cv2.flip(image_np_with_detections,0)

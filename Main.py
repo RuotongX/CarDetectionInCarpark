@@ -3,7 +3,7 @@ import cv2
 import tensorflow as tf
 from object_detection.utils import label_map_util
 label_map_util.tf = tf.compat.v1
-tf.gfile = tf.io.gfile
+
 from object_detection.utils import config_util
 from object_detection.utils import visualization_utils as viz_utils
 
@@ -126,9 +126,12 @@ while True:
         if parkingbox[i][4] == 1:
             cv2.rectangle(image_np_with_detections,(parkingbox[i][0],parkingbox[i][1]),(parkingbox[i][2],parkingbox[i][3]),(0,0,255),2)
             TimerForParking[i] = TimerForParking[i] + 1
+            cv2.putText(image_np_with_detections,'Close',(parkingbox[i][0],parkingbox[i][1]),cv2.FONT_HERSHEY_COMPLEX,0.5,(0, 255, 0), 1)
         else:
             cv2.rectangle(image_np_with_detections,(parkingbox[i][0],parkingbox[i][1]),(parkingbox[i][2],parkingbox[i][3]),(255,255,255),2)
             TimerForParking[i] = 0
+            cv2.putText(image_np_with_detections, 'Open', (parkingbox[i][0], parkingbox[i][1]),
+                        cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
 
     for i in range(len(TimerForParking)):
         cv2.putText(image_np_with_detections,'PK'+str(i+1)+':'+str(round(TimerForParking[i]/24))+'s'+'  ',(70*i,20),cv2.FONT_HERSHEY_COMPLEX,0.5,(0, 255, 0), 1)

@@ -11,6 +11,9 @@ from object_detection.utils import visualization_utils as viz_utils
 # Enable GPU dynamic memory allocation
 gpus = tf.config.experimental.list_physical_devices('GPU')
 
+outw = 640
+outh = 320
+
 if gpus:
   # Restrict TensorFlow to only allocate 1GB of memory on the first GPU
   try:
@@ -30,11 +33,11 @@ PATH_TO_CKPT = 'efficientdet_d3_coco17_tpu-32/checkpoint/'
 PATH_TO_CFG = 'efficientdet_d3_coco17_tpu-32/pipeline.config'
 PATH_TO_SAVED_MODEL = 'efficientdet_d3_coco17_tpu-32/saved_model'
 
-PATH_TO_LABELS = 'faster_rcnn_resnet50_v1_1024x1024_coco17_tpu-8/mscoco_label_map.pbtxt'
-cap = cv2.VideoCapture('test1.mp4')
+PATH_TO_LABELS = 'efficientdet_d3_coco17_tpu-32/mscoco_label_map.pbtxt'
+cap = cv2.VideoCapture('shooting.mp4')
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 fps =cap.get(cv2.CAP_PROP_FPS)
-out = cv2.VideoWriter('out.avi', fourcc, fps, (640, 256))
+out = cv2.VideoWriter('out1.avi', fourcc, fps, (outw, outh))
 
 detect_fn = tf.saved_model.load(PATH_TO_SAVED_MODEL)
 
@@ -88,7 +91,7 @@ while True:
 
     carlist = []
     for i in range(len(detectionlist)):
-        if detectionlist[i][1] == 3 or detectionlist[i][1] == 6 and detectionlist[i][2] > 0.3:
+        if (detectionlist[i][1] == 3 or detectionlist[i][1] == 6 or detectionlist[i][1] == 8) and detectionlist[i][2] > 0.4:
             y = (detectionlist[i][0][0]*256+detectionlist[i][0][2]*256)/2
             x = (detectionlist[i][0][1]*640+detectionlist[i][0][3]*640)/2
             score = detectionlist[i][2]
@@ -97,6 +100,8 @@ while True:
             car.append(y)
             car.append(score)
             carlist.append(car)
+
+    # print(len(carlist))
 
     # viz_utils.visualize_boxes_and_labels_on_image_array(
     #             image_np_with_detections,
@@ -109,16 +114,16 @@ while True:
     #             min_score_thresh=.40,
     #             agnostic_mode=False)
 
-    parkingbox = [[3,72,46,225,0],[52,77,120,224,0],[135,76,202,241,0],[218,81,282,241,0],[297,74,364,242,0],[376,87,455,241,0],[463,98,539,238,0],[547,92,636,244,0]]
+    # parkingbox = [[3,72,46,225,0],[52,77,120,224,0],[135,76,202,241,0],[218,81,282,241,0],[297,74,364,242,0],[376,87,455,241,0],[463,98,539,238,0],[547,92,636,244,0]]
+
+    parkingbox = [[195,76,307,229,0],[365,63,490,244,0],[500,19,640,220,0]]
 
     for i in range(len(parkingbox)):
         for car in carlist:
             if parkingbox[i][0]+10 < car[0] < parkingbox[i][2]-10 and parkingbox[i][1]+10 < car[1] < parkingbox[i][3]-10:
                 parkingbox[i][4] = 1
-                if parkingbox[6][4] == 1 and i == 6:
-                    print(str(car[0])+str(car[1]))
-                    if round(car[0]) == 516 and round(car[1]) == 169:
-                        parkingbox[6][4] = 0
+                # if parkingbox[1][4] == 1 and i == 1:
+                #     print(str(car[0])+' '+str(car[1]))
 
 
 
@@ -133,15 +138,15 @@ while True:
             cv2.putText(image_np_with_detections, 'Open', (parkingbox[i][0], parkingbox[i][1]),
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
 
-    for i in range(len(TimerForParking)):
-        cv2.putText(image_np_with_detections,'PK'+str(i+1)+':'+str(round(TimerForParking[i]/24))+'s'+'  ',(70*i,20),cv2.FONT_HERSHEY_COMPLEX,0.5,(0, 255, 0), 1)
+    for i in range(len(parkingbox)):
+        cv2.putText(image_np_with_detections,'PK'+str(i+1)+':'+str(round(TimerForParking[i]/fps))+'s'+'  ',(70*i,20),cv2.FONT_HERSHEY_COMPLEX,0.5,(0, 255, 0), 1)
 
     if ret == True:
         frame = cv2.flip(image_np_with_detections,0)
 
         out.write(image_np_with_detections)
         # Display output
-        cv2.imshow('object detection', cv2.resize(image_np_with_detections, (640, 256)))
+        cv2.imshow('object detection', cv2.resize(image_np_with_detections, (outw, outh)))
 
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break

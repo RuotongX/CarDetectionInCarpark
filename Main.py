@@ -92,8 +92,8 @@ while True:
     carlist = []
     for i in range(len(detectionlist)):
         if (detectionlist[i][1] == 3 or detectionlist[i][1] == 6 or detectionlist[i][1] == 8) and detectionlist[i][2] > 0.4:
-            y = (detectionlist[i][0][0]*256+detectionlist[i][0][2]*256)/2
-            x = (detectionlist[i][0][1]*640+detectionlist[i][0][3]*640)/2
+            y = (detectionlist[i][0][0]*outh+detectionlist[i][0][2]*outh)/2
+            x = (detectionlist[i][0][1]*outw+detectionlist[i][0][3]*outw)/2
             score = detectionlist[i][2]
             car = []
             car.append(x)
